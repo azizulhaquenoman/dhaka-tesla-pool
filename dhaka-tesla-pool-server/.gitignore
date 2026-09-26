@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Node build output and test coverage
+dist/
+build/
+coverage/
+
+# Prisma local artifacts
+.prisma/
+
+# Local tooling files
+*.local

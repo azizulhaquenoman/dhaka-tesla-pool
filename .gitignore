@@ -1,30 +1,9 @@
-# Dependencies
-node_modules/
+# Reference files kept locally for the challenge
+/Dhaka_Tesla_Pool_PRD_Internship.pdf
+/Screenshot 2026-09-26 011652.png
+/Screenshot 2026-09-26 012046.png
 
-# Environment files and secrets
-.env
-.env.*
-!.env.example
-!.env.*.example
-
-# Build output
-dist/
-dist-ssr/
-build/
-coverage/
-
-# Runtime output
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Prisma local artifacts
-.prisma/
-
-# Local editor and OS files
+# Repository-wide local files
 .vscode/*
 !.vscode/extensions.json
 .idea/
@@ -32,6 +11,4 @@ pnpm-debug.log*
 Thumbs.db
 *.swp
 *.swo
-
-# Local tooling files
-*.local
+*.log

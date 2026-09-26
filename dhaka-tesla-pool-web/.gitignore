@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Vite build output and test coverage
+dist/
+dist-ssr/
+build/
+coverage/
+
+# Local tooling files
+*.local
