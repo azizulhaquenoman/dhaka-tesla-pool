@@ -5,16 +5,19 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
 
 // Pages
-import LandingPage            from './pages/LandingPage.jsx';
-import LoginPage              from './pages/LoginPage.jsx';
-import RegisterPage           from './pages/RegisterPage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import PassengerDashboardPage from './pages/passenger/PassengerDashboardPage.jsx';
-import RequestRidePage        from './pages/passenger/RequestRidePage.jsx';
-import TrackRidePage          from './pages/passenger/TrackRidePage.jsx';
-import PassengerHistoryPage   from './pages/passenger/PassengerHistoryPage.jsx';
-import DriverDashboardPage    from './pages/driver/DriverDashboardPage.jsx';
-import DriverRidePage         from './pages/driver/DriverRidePage.jsx';
-import DriverHistoryPage      from './pages/driver/DriverHistoryPage.jsx';
+import RequestRidePage from './pages/passenger/RequestRidePage.jsx';
+import TrackRidePage from './pages/passenger/TrackRidePage.jsx';
+import PassengerHistoryPage from './pages/passenger/PassengerHistoryPage.jsx';
+import DriverDashboardPage from './pages/driver/DriverDashboardPage.jsx';
+import DriverRidePage from './pages/driver/DriverRidePage.jsx';
+import DriverHistoryPage from './pages/driver/DriverHistoryPage.jsx';
 
 export default function App() {
   return (
@@ -24,9 +27,18 @@ export default function App() {
         <main className="main">
           <Routes>
             {/* ── Public ─────────────────────────────────── */}
-            <Route path="/"         element={<LandingPage />} />
-            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+            {/* ── Auth-required (any role) ────────────────── */}
+            <Route path="/verify-email" element={
+              <ProtectedRoute><VerifyEmailPage /></ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute><ProfilePage /></ProtectedRoute>
+            } />
 
             {/* ── Passenger ──────────────────────────────── */}
             <Route path="/passenger/dashboard" element={

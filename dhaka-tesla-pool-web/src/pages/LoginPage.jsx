@@ -24,6 +24,13 @@ export default function LoginPage() {
       setUser(data.user);
       navigate(data.user.role === 'DRIVER' ? '/driver/dashboard' : '/passenger/dashboard');
     } catch (err) {
+      if (err.response?.status === 403) {
+        // Email not verified — send to verification page
+        const { data } = await getMe().catch(() => ({ data: { user: null } }));
+        if (data.user) setUser(data.user);
+        navigate('/verify-email');
+        return;
+      }
       setError(err.response?.data?.message ?? 'Invalid email or password.');
     } finally {
       setLoading(false);
@@ -75,6 +82,9 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <p className="auth-card__footer">
+          <Link to="/forgot-password" className="auth-card__link">Forgot password?</Link>
+        </p>
         <p className="auth-card__footer">
           New here? <Link to="/register" className="auth-card__link">Create an account</Link>
         </p>

@@ -15,9 +15,9 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  const isDriver        = user.role === 'DRIVER';
-  const dashboardPath   = isDriver ? '/driver/dashboard'  : '/passenger/dashboard';
-  const historyPath     = isDriver ? '/driver/history'    : '/passenger/history';
+  const isDriver = user.role === 'DRIVER';
+  const dashboardPath = isDriver ? '/driver/dashboard' : '/passenger/dashboard';
+  const historyPath = isDriver ? '/driver/history' : '/passenger/history';
 
   return (
     <nav className="navbar">
@@ -41,6 +41,10 @@ export default function Navbar() {
             Book ride
           </NavLink>
         )}
+        <NavLink to="/profile" className={({ isActive }) =>
+          `navbar__link ${isActive ? 'navbar__link--active' : ''}`}>
+          Profile
+        </NavLink>
       </div>
 
       <div className="navbar__user">
