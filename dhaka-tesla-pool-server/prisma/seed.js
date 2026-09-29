@@ -15,13 +15,13 @@
 // ─────────────────────────────────────────────────────────────
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
-const { PrismaPg }     = require('@prisma/adapter-pg');
-const { Pool }         = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const pool    = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
-const prisma  = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱  Seeding Dhaka Tesla Pool …');
@@ -35,19 +35,19 @@ async function main() {
   ] = await Promise.all([
     bcrypt.hash('jashim123', 12),
     bcrypt.hash('nusrat123', 12),
-    bcrypt.hash('rafiq123',  12),
+    bcrypt.hash('rafiq123', 12),
     bcrypt.hash('shirin123', 12),
   ]);
 
   // ── Driver — Jashim ────────────────────────────────────────
   const driver = await prisma.user.upsert({
-    where:  { email: 'jashim@tesla.pool' },
+    where: { email: 'jashim@tesla.pool' },
     update: {},
     create: {
-      name:          'Jashim',
-      email:         'jashim@tesla.pool',
-      passwordHash:  driverHash,
-      role:          'DRIVER',
+      name: 'Jashim',
+      email: 'jashim@tesla.pool',
+      passwordHash: driverHash,
+      role: 'DRIVER',
       emailVerified: true,
     },
   });
@@ -55,27 +55,27 @@ async function main() {
 
   // ── Tesla "Bullet" — assigned to Jashim ────────────────────
   const bullet = await prisma.tesla.upsert({
-    where:  { driverId: driver.id },
+    where: { driverId: driver.id },
     update: {},
     create: {
       driverId: driver.id,
-      name:     'Bullet',
-      plate:    'DTP-001',
+      name: 'Bullet',
+      plate: 'DTP-001',
       capacity: 3,
-      status:   'OFFLINE',
+      status: 'OFFLINE',
     },
   });
   console.log(`  ✓ Tesla: "${bullet.name}" (${bullet.plate}), capacity ${bullet.capacity}`);
 
   // ── Passenger 1 ────────────────────────────────────────────
   const p1 = await prisma.user.upsert({
-    where:  { email: 'nusrat@tesla.pool' },
+    where: { email: 'nusrat@tesla.pool' },
     update: {},
     create: {
-      name:          'Nusrat',
-      email:         'nusrat@tesla.pool',
-      passwordHash:  p1Hash,
-      role:          'PASSENGER',
+      name: 'Nusrat',
+      email: 'nusrat@tesla.pool',
+      passwordHash: p1Hash,
+      role: 'PASSENGER',
       emailVerified: true,
     },
   });
@@ -83,13 +83,13 @@ async function main() {
 
   // ── Passenger 2 ────────────────────────────────────────────
   const p2 = await prisma.user.upsert({
-    where:  { email: 'rafiq@tesla.pool' },
+    where: { email: 'rafiq@tesla.pool' },
     update: {},
     create: {
-      name:          'Rafiq',
-      email:         'rafiq@tesla.pool',
-      passwordHash:  p2Hash,
-      role:          'PASSENGER',
+      name: 'Rafiq',
+      email: 'rafiq@tesla.pool',
+      passwordHash: p2Hash,
+      role: 'PASSENGER',
       emailVerified: true,
     },
   });
@@ -97,13 +97,13 @@ async function main() {
 
   // ── Passenger 3 — concurrency test case ────────────────────
   const p3 = await prisma.user.upsert({
-    where:  { email: 'shirin@tesla.pool' },
+    where: { email: 'shirin@tesla.pool' },
     update: {},
     create: {
-      name:          'Shirin',
-      email:         'shirin@tesla.pool',
-      passwordHash:  p3Hash,
-      role:          'PASSENGER',
+      name: 'Shirin',
+      email: 'shirin@tesla.pool',
+      passwordHash: p3Hash,
+      role: 'PASSENGER',
       emailVerified: true,
     },
   });
