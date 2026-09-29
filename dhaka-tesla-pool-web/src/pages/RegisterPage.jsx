@@ -6,10 +6,10 @@ import ErrorMessage from '../components/common/ErrorMessage.jsx';
 
 export default function RegisterPage() {
   const { setUser } = useAuth();
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
 
-  const [form, setForm]       = useState({ name: '', email: '', password: '' });
-  const [error, setError]     = useState('');
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -26,7 +26,7 @@ export default function RegisterPage() {
       await register(form.name, form.email, form.password);
       const { data } = await getMe();
       setUser(data.user);
-      navigate('/passenger/dashboard');
+      navigate('/verify-email'); // must verify email before accessing dashboard
     } catch (err) {
       setError(err.response?.data?.message ?? 'Registration failed. Email may already be in use.');
     } finally {
