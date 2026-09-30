@@ -9,11 +9,11 @@ export default function PassengerList({ passengers = [] }) {
   return (
     <ul className="passenger-list">
       {passengers.map((p) => {
-        const pickup  = getZoneById(p.pickupZone);
+        const pickup = getZoneById(p.pickupZone);
         const dropoff = getZoneById(p.dropoffZone);
         return (
           <li key={p.id} className="passenger-list__item">
-            <div className="passenger-list__name">{p.passengerName}</div>
+            <div className="passenger-list__name">{p.passenger?.name}</div>
             <div className="passenger-list__route">
               {pickup?.label ?? p.pickupZone}
               <span className="route-arrow"> → </span>

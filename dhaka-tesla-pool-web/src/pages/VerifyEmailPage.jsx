@@ -7,13 +7,13 @@ import ErrorMessage from '../components/common/ErrorMessage.jsx';
 
 export default function VerifyEmailPage() {
   const { user, refresh } = useAuth();
-  const navigate          = useNavigate();
+  const navigate = useNavigate();
 
-  const [otp,          setOtp]          = useState('');
-  const [error,        setError]        = useState('');
-  const [submitting,   setSubmitting]   = useState(false);
-  const [resending,    setResending]    = useState(false);
-  const [resendMsg,    setResendMsg]    = useState('');
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState('');
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -22,7 +22,8 @@ export default function VerifyEmailPage() {
     setError('');
     try {
       await verifyEmail(otp);
-      await refresh();
+      await refresh();   // backend now issues dtp_token on verify, so this works
+      // user state is now set with role — navigate accordingly
       navigate(user?.role === 'DRIVER' ? '/driver/dashboard' : '/passenger/dashboard');
     } catch (err) {
       setError(err.response?.data?.message ?? 'Invalid or expired code. Try again.');
