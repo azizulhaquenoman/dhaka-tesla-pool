@@ -5,11 +5,11 @@ import { useAuth } from '../hooks/useAuth.js';
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 
 export default function LoginPage() {
-  const { setUser } = useAuth();
-  const navigate    = useNavigate();
+  const { setUser, refresh } = useAuth();
+  const navigate = useNavigate();
 
-  const [form, setForm]       = useState({ email: '', password: '' });
-  const [error, setError]     = useState('');
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -25,9 +25,9 @@ export default function LoginPage() {
       navigate(data.user.role === 'DRIVER' ? '/driver/dashboard' : '/passenger/dashboard');
     } catch (err) {
       if (err.response?.status === 403) {
-        // Email not verified — send to verification page
-        const { data } = await getMe().catch(() => ({ data: { user: null } }));
-        if (data.user) setUser(data.user);
+        // backend now issues dtp_verification cookie on 403
+        // refresh() uses authenticateMixed → works with dtp_verification
+        await refresh();
         navigate('/verify-email');
         return;
       }

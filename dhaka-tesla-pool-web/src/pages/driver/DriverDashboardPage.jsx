@@ -14,13 +14,13 @@ import EmptyState from '../../components/common/EmptyState.jsx';
 export default function DriverDashboardPage() {
   const { user } = useAuth();
 
-  const [isOnline,    setIsOnline]    = useState(false);
-  const [requests,    setRequests]    = useState([]);
-  const [activePool,  setActivePool]  = useState(null);
-  const [loading,     setLoading]     = useState(true);
-  const [toggling,    setToggling]    = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [activePool, setActivePool] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
   const [acceptingId, setAcceptingId] = useState(null);
-  const [error,       setError]       = useState('');
+  const [error, setError] = useState('');
 
   const fetchAll = useCallback(async () => {
     try {
@@ -31,8 +31,12 @@ export default function DriverDashboardPage() {
       ]);
       if (statusRes.status === 'fulfilled')
         setIsOnline(statusRes.value.data.status === 'ONLINE');
+
       if (reqRes.status === 'fulfilled')
         setRequests(reqRes.value.data.requests ?? []);
+      else
+        setRequests([]);   // ADD — clear stale requests when offline
+
       if (poolRes.status === 'fulfilled')
         setActivePool(poolRes.value.data.pool ?? null);
     } catch {

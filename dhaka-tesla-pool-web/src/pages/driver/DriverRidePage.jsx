@@ -8,13 +8,13 @@ import ErrorMessage from '../../components/common/ErrorMessage.jsx';
 import { DRIVER_TRANSITIONS } from '../../utils/rideStatus.js';
 
 export default function DriverRidePage() {
-  const { id }   = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const [pool,      setPool]      = useState(null);
-  const [loading,   setLoading]   = useState(true);
+  const [pool, setPool] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [advancing, setAdvancing] = useState(false);
-  const [error,     setError]     = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getActivePool()
@@ -42,7 +42,7 @@ export default function DriverRidePage() {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (!pool)   return <ErrorMessage message={error || 'Pool not found.'} />;
+  if (!pool) return <ErrorMessage message={error || 'Pool not found.'} />;
 
   const transition = DRIVER_TRANSITIONS[pool.status];
 
@@ -55,12 +55,12 @@ export default function DriverRidePage() {
 
       <div className="pool-capacity-bar">
         <span className="pool-capacity-bar__label">
-          {pool.seatsOccupied} / {pool.capacity} seats occupied
+          {pool.seatsOccupied} / {pool.tesla?.capacity ?? '?'} seats occupied
         </span>
         <div className="pool-capacity-bar__track">
           <div
             className="pool-capacity-bar__fill"
-            style={{ width: `${(pool.seatsOccupied / pool.capacity) * 100}%` }}
+            style={{ width: pool.tesla ? `${(pool.seatsOccupied / pool.tesla.capacity) * 100}%` : '0%' }}
           />
         </div>
       </div>

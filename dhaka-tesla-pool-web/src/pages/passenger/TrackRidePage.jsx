@@ -10,12 +10,12 @@ import { getZoneById } from '../../utils/zones.js';
 import { canCancel } from '../../utils/rideStatus.js';
 
 export default function TrackRidePage() {
-  const { id }   = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const { ride, loading, error }  = useRideStatus(id);
+  const { ride, loading, error } = useRideStatus(id);
   const [cancelling, setCancelling] = useState(false);
-  const [cancelErr,  setCancelErr]  = useState('');
+  const [cancelErr, setCancelErr] = useState('');
 
   const handleCancel = async () => {
     if (!confirm('Cancel this ride?')) return;
@@ -31,10 +31,10 @@ export default function TrackRidePage() {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error)   return <ErrorMessage message={error} />;
-  if (!ride)   return null;
+  if (error) return <ErrorMessage message={error} />;
+  if (!ride) return null;
 
-  const pickup  = getZoneById(ride.pickupZone);
+  const pickup = getZoneById(ride.pickupZone);
   const dropoff = getZoneById(ride.dropoffZone);
 
   return (
@@ -62,13 +62,13 @@ export default function TrackRidePage() {
         </div>
       </div>
 
-      {ride.driverName && (
+      {activeRide.pool?.tesla?.driver && (
         <div className="driver-info-block">
           <span>🚗</span>
           <div>
-            <p className="driver-info-block__name">{ride.driverName}</p>
+            <p className="driver-info-block__name">{ride.pool.tesla.driver.name}</p>
             <p className="driver-info-block__tesla">
-              {ride.teslaName} · {ride.seatsRequested} seat{ride.seatsRequested !== 1 ? 's' : ''}
+              {ride.pool.tesla.name} · {ride.seatsRequested} seat{ride.seatsRequested !== 1 ? 's' : ''}
             </p>
           </div>
         </div>

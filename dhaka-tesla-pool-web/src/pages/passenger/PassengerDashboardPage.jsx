@@ -11,8 +11,8 @@ import { getZoneById } from '../../utils/zones.js';
 export default function PassengerDashboardPage() {
   const { user } = useAuth();
   const [activeRide, setActiveRide] = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getActiveRide()
@@ -59,9 +59,9 @@ export default function PassengerDashboardPage() {
               </div>
             </div>
 
-            {activeRide.driverName && (
+            {activeRide.pool?.tesla?.driver?.name && (
               <p className="active-ride-card__driver">
-                🚗 {activeRide.driverName} · {activeRide.teslaName}
+                🚗 {activeRide.pool.tesla.driver.name} · {activeRide.pool.tesla.name}
               </p>
             )}
 

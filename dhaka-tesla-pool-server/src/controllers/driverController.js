@@ -22,48 +22,43 @@ async function setStatus(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// GET /api/driver/requests
 async function getIncomingRequests(req, res, next) {
   try {
     const requests = await poolService.getIncomingRequests(req.user.id);
-    res.json(requests);
+    res.json({ requests });                                            // WRAPPED
   } catch (err) { next(err); }
 }
 
-// PATCH /api/driver/rides/:rideId/accept
 async function acceptRequest(req, res, next) {
   try {
     const pool = await poolService.acceptRideRequest(req.user.id, req.params.rideId);
-    res.json(pool);
+    res.json({ pool });                                                // WRAPPED
   } catch (err) { next(err); }
 }
 
-// GET /api/driver/pool/active
 async function getActivePool(req, res, next) {
   try {
     const pool = await poolService.getActivePool(req.user.id);
-    if (!pool) return res.json(null);
-    res.json(pool);
+    res.json({ pool: pool ?? null });                                  // WRAPPED
   } catch (err) { next(err); }
 }
 
-// PATCH /api/driver/pool/:poolId/status
 async function advancePoolStatus(req, res, next) {
   try {
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: 'status is required' });
     const pool = await poolService.advancePoolStatus(req.user.id, req.params.poolId, status);
-    res.json(pool);
+    res.json({ pool });                                                // WRAPPED
   } catch (err) { next(err); }
 }
 
-// GET /api/driver/history
 async function getDriverHistory(req, res, next) {
   try {
-    const history = await poolService.getDriverHistory(req.user.id);
-    res.json(history);
+    const pools = await poolService.getDriverHistory(req.user.id);
+    res.json({ pools });                                               // WRAPPED
   } catch (err) { next(err); }
 }
+
 
 module.exports = {
   getStatus,
