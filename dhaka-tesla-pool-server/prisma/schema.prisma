@@ -1,0 +1,198 @@
+// ─────────────────────────────────────────────────────────────
+// Dhaka Tesla Pool — Prisma Schema
+// Database: PostgreSQL
+// All money stored as INTEGER PAISA (1 taka = 100 paisa)
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  PASSENGER
+  DRIVER
+}
+
+enum TeslaStatus {
+  OFFLINE
+  ONLINE
+}
+
+enum PoolStatus {
+  OPEN
+  MATCHED
+  DRIVER_ARRIVED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum RideStatus {
+  REQUESTED
+  MATCHED
+  DRIVER_ARRIVED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────────────────────
+// User — passengers and drivers share one table, role decides behaviour
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  role         Role   @default(PASSENGER)
+
+  // ── Email verification (required before first login) ────────
+  emailVerified              Boolean   @default(false)
+  emailVerificationOtp       String?
+  emailVerificationOtpExpiry DateTime?
+
+  // ── Password reset via email OTP ────────────────────────────
+  passwordResetOtp       String?
+  passwordResetOtpExpiry DateTime?
+
+  // ── Email change — 3-step flow ──────────────────────────────
+  // Step 1: store new email + send OTP to current email
+  pendingEmail                String?
+  currentEmailChangeOtp       String?
+  currentEmailChangeOtpExpiry DateTime?
+  // Step 2: send OTP to new (pending) email
+  newEmailOtp                 String?
+  newEmailOtpExpiry           DateTime?
+
+  // ── Phone — verified via WhatsApp OTP ───────────────────────
+  phone                      String?   @unique
+  phoneVerified              Boolean   @default(false)
+  phoneVerificationOtp       String?
+  phoneVerificationOtpExpiry DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tesla        Tesla?
+  rideRequests RideRequest[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tesla — vehicle owned by a driver (one driver : one Tesla for MVP)
+// ─────────────────────────────────────────────────────────────
+
+model Tesla {
+  id       String @id @default(uuid())
+  driverId String @unique // enforces one Tesla per driver
+  driver   User   @relation(fields: [driverId], references: [id])
+
+  name     String // e.g. "Bullet"
+  plate    String      @unique
+  capacity Int         @default(3) // max seats — never exceeded
+  status   TeslaStatus @default(OFFLINE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pools Pool[]
+
+  @@index([status]) // filter online Teslas quickly
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pool — one trip shared by one or more passengers in one Tesla
+// seatsOccupied is updated atomically (row-level lock) to prevent
+// overbooking when two passengers claim the last seat simultaneously
+// ─────────────────────────────────────────────────────────────
+
+model Pool {
+  id      String @id @default(uuid())
+  teslaId String
+  tesla   Tesla  @relation(fields: [teslaId], references: [id])
+
+  status        PoolStatus @default(OPEN)
+  seatsOccupied Int        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rideRequests RideRequest[]
+
+  @@index([teslaId, status]) // driver fetches their active pool fast
+}
+
+// ─────────────────────────────────────────────────────────────
+// RideRequest — one passenger's booking; many can share one Pool
+// status mirrors Pool status but can diverge (e.g. one passenger
+// cancels while the pool continues for others)
+// ─────────────────────────────────────────────────────────────
+
+model RideRequest {
+  id          String @id @default(uuid())
+  passengerId String
+  passenger   User   @relation(fields: [passengerId], references: [id])
+
+  poolId String? // null until matched to a pool
+  pool   Pool?   @relation(fields: [poolId], references: [id])
+
+  pickupZone     String // Dhaka zone id e.g. "banani"
+  dropoffZone    String // Dhaka zone id e.g. "mohakhali"
+  seatsRequested Int        @default(1)
+  status         RideStatus @default(REQUESTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fare          Fare?
+  statusHistory StatusHistory[]
+
+  @@index([passengerId, status]) // passenger's active/history queries
+  @@index([status]) // driver browses unmatched requests
+  @@index([poolId]) // pool → its passengers
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fare — one record per RideRequest; all amounts in INTEGER PAISA
+// Formula: totalFarePaisa = baseFarePaisa + distanceChargePaisa - poolDiscountPaisa
+// Stored on completion but estimated at request time from the same formula
+// ─────────────────────────────────────────────────────────────
+
+model Fare {
+  id            String      @id @default(uuid())
+  rideRequestId String      @unique
+  rideRequest   RideRequest @relation(fields: [rideRequestId], references: [id])
+
+  baseFarePaisa       Int // fixed: 3000 (৳30)
+  distanceChargePaisa Int // distance_km × 1500 paisa/km
+  poolDiscountPaisa   Int @default(0) // 20% of subtotal when pooled
+  totalFarePaisa      Int // final amount passenger pays
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// StatusHistory — immutable audit trail of every ride state change
+// Used for debugging, dispute resolution, and the video demo
+// ─────────────────────────────────────────────────────────────
+
+model StatusHistory {
+  id            String      @id @default(uuid())
+  rideRequestId String
+  rideRequest   RideRequest @relation(fields: [rideRequestId], references: [id])
+
+  fromStatus String // previous RideStatus value
+  toStatus   String // new RideStatus value
+  changedAt  DateTime @default(now())
+
+  @@index([rideRequestId]) // fetch full history for a ride fast
+}
