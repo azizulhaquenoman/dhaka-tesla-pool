@@ -34,17 +34,12 @@ async function register({ name, email, password }) {
 // ── Login ─────────────────────────────────────────────────────
 async function login({ email, password }) {
   const user = await prisma.user.findUnique({ where: { email } });
-
   if (!user) throw new AppError('Invalid credentials', 401);
 
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) throw new AppError('Invalid credentials', 401);
 
-  // Email must be verified before first login
-  if (!user.emailVerified) {
-    throw new AppError('Email not verified', 403);
-  }
-
+  // Return user regardless of emailVerified — controller decides response
   return user;
 }
 

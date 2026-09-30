@@ -27,8 +27,8 @@
 // support conditional UPDATE ... RETURNING in a single call.
 // ─────────────────────────────────────────────────────────────
 const { Prisma } = require('@prisma/client');
-const prisma     = require('../prisma/client');
-const AppError   = require('../utils/AppError');
+const prisma = require('../prisma/client');
+const AppError = require('../utils/AppError');
 const { arePoolable } = require('../utils/zones');
 const { calculateFare } = require('../utils/fare');
 const { applyRideTransition } = require('./rideService');
@@ -49,7 +49,7 @@ async function setDriverStatus(driverId, status) {
 
   return prisma.tesla.update({
     where: { driverId },
-    data:  { status },
+    data: { status },
   });
 }
 
@@ -100,7 +100,7 @@ async function acceptRideRequest(driverId, rideId) {
   const activePool = await prisma.pool.findFirst({
     where: {
       teslaId: tesla.id,
-      status:  { notIn: ['COMPLETED', 'CANCELLED'] },
+      status: { notIn: ['COMPLETED', 'CANCELLED'] },
     },
     include: {
       rideRequests: {
@@ -146,8 +146,8 @@ async function acceptRideRequest(driverId, rideId) {
     // Create a new pool; first passenger always fits
     pool = await prisma.pool.create({
       data: {
-        teslaId:       tesla.id,
-        status:        'OPEN',
+        teslaId: tesla.id,
+        status: 'OPEN',
         seatsOccupied: ride.seatsRequested,
       },
     });
@@ -157,13 +157,13 @@ async function acceptRideRequest(driverId, rideId) {
   await prisma.$transaction([
     prisma.rideRequest.update({
       where: { id: ride.id },
-      data:  { poolId: pool.id, status: 'MATCHED' },
+      data: { poolId: pool.id, status: 'MATCHED' },
     }),
     prisma.statusHistory.create({
       data: {
         rideRequestId: ride.id,
-        fromStatus:    'REQUESTED',
-        toStatus:      'MATCHED',
+        fromStatus: 'REQUESTED',
+        toStatus: 'MATCHED',
       },
     }),
   ]);
@@ -175,7 +175,7 @@ async function acceptRideRequest(driverId, rideId) {
     where: { id: pool.id },
     include: {
       rideRequests: {
-        where:   { status: { notIn: ['CANCELLED'] } },
+        where: { status: { notIn: ['CANCELLED'] } },
         include: { passenger: { select: { id: true, name: true } }, fare: true },
       },
     },
@@ -202,19 +202,19 @@ async function recalculateFaresForPool(poolId) {
     rides.map((r) => {
       const fareBreakdown = calculateFare(r.pickupZone, r.dropoffZone, isPooled);
       return prisma.fare.upsert({
-        where:  { rideRequestId: r.id },
+        where: { rideRequestId: r.id },
         update: {
-          baseFarePaisa:       fareBreakdown.baseFarePaisa,
+          baseFarePaisa: fareBreakdown.baseFarePaisa,
           distanceChargePaisa: fareBreakdown.distanceChargePaisa,
-          poolDiscountPaisa:   fareBreakdown.poolDiscountPaisa,
-          totalFarePaisa:      fareBreakdown.totalFarePaisa,
+          poolDiscountPaisa: fareBreakdown.poolDiscountPaisa,
+          totalFarePaisa: fareBreakdown.totalFarePaisa,
         },
         create: {
-          rideRequestId:       r.id,
-          baseFarePaisa:       fareBreakdown.baseFarePaisa,
+          rideRequestId: r.id,
+          baseFarePaisa: fareBreakdown.baseFarePaisa,
           distanceChargePaisa: fareBreakdown.distanceChargePaisa,
-          poolDiscountPaisa:   fareBreakdown.poolDiscountPaisa,
-          totalFarePaisa:      fareBreakdown.totalFarePaisa,
+          poolDiscountPaisa: fareBreakdown.poolDiscountPaisa,
+          totalFarePaisa: fareBreakdown.totalFarePaisa,
         },
       });
     }),
@@ -227,13 +227,11 @@ async function getActivePool(driverId) {
   if (!tesla) throw new AppError('No Tesla assigned to this driver', 404);
 
   const pool = await prisma.pool.findFirst({
-    where: {
-      teslaId: tesla.id,
-      status:  { notIn: ['COMPLETED', 'CANCELLED'] },
-    },
+    where: { teslaId: tesla.id, status: { notIn: ['COMPLETED', 'CANCELLED'] } },
     include: {
+      tesla: { select: { capacity: true, name: true, plate: true } },  // ADD tesla
       rideRequests: {
-        where:   { status: { notIn: ['CANCELLED'] } },
+        where: { status: { notIn: ['CANCELLED'] } },
         include: {
           passenger: { select: { id: true, name: true, phone: true } },
           fare: true,
@@ -243,7 +241,11 @@ async function getActivePool(driverId) {
     },
   });
 
-  return pool; // null if no active pool
+  if (!pool) return null;
+
+  // Rename rideRequests → passengers for frontend consistency
+  const { rideRequests, ...rest } = pool;
+  return { ...rest, passengers: rideRequests };
 }
 
 // ── Advance pool status ───────────────────────────────────────
@@ -258,12 +260,12 @@ async function getActivePool(driverId) {
  * Each ride transition is logged to StatusHistory.
  */
 const POOL_TRANSITIONS = {
-  OPEN:           ['MATCHED', 'CANCELLED'],
-  MATCHED:        ['DRIVER_ARRIVED', 'CANCELLED'],
+  OPEN: ['MATCHED', 'CANCELLED'],
+  MATCHED: ['DRIVER_ARRIVED', 'CANCELLED'],
   DRIVER_ARRIVED: ['STARTED', 'CANCELLED'],
-  STARTED:        ['COMPLETED'],
-  COMPLETED:      [],
-  CANCELLED:      [],
+  STARTED: ['COMPLETED'],
+  COMPLETED: [],
+  CANCELLED: [],
 };
 
 async function advancePoolStatus(driverId, poolId, toStatus) {
@@ -295,12 +297,13 @@ async function advancePoolStatus(driverId, poolId, toStatus) {
   // Then advance the pool itself
   await prisma.pool.update({
     where: { id: poolId },
-    data:  { status: toStatus },
+    data: { status: toStatus },
   });
 
-  return prisma.pool.findUnique({
+  const updatedPool = await prisma.pool.findUnique({
     where: { id: poolId },
     include: {
+      tesla: { select: { capacity: true, name: true, plate: true } },  // ADD
       rideRequests: {
         include: {
           passenger: { select: { id: true, name: true } },
@@ -309,6 +312,9 @@ async function advancePoolStatus(driverId, poolId, toStatus) {
       },
     },
   });
+
+  const { rideRequests, ...rest } = updatedPool;
+  return { ...rest, passengers: rideRequests };
 }
 
 // ── Driver history ────────────────────────────────────────────
@@ -319,7 +325,7 @@ async function getDriverHistory(driverId) {
   const pools = await prisma.pool.findMany({
     where: {
       teslaId: tesla.id,
-      status:  { in: ['COMPLETED', 'CANCELLED'] },
+      status: { in: ['COMPLETED', 'CANCELLED'] },
     },
     include: {
       rideRequests: {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register, getMe } from '../api/auth.js';
+import { register } from '../api/auth.js';
 import { useAuth } from '../hooks/useAuth.js';
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 
@@ -23,10 +23,9 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await register(form.name, form.email, form.password);
-      const { data } = await getMe();
-      setUser(data.user);
-      navigate('/verify-email'); // must verify email before accessing dashboard
+      const { data } = await register(form.name, form.email, form.password);
+      setUser(data.user);           // use data from register response directly
+      navigate('/verify-email');    // no getMe() call needed
     } catch (err) {
       setError(err.response?.data?.message ?? 'Registration failed. Email may already be in use.');
     } finally {

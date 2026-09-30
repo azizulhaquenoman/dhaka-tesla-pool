@@ -1,12 +1,12 @@
 import { getZoneById } from '../../utils/zones.js';
 
 export default function PoolRequestCard({ request, onAccept, accepting }) {
-  const pickup  = getZoneById(request.pickupZone);
+  const pickup = getZoneById(request.pickupZone);
   const dropoff = getZoneById(request.dropoffZone);
 
   return (
     <div className="pool-req-card">
-      <div className="pool-req-card__passenger">{request.passengerName}</div>
+      <div className="pool-req-card__passenger">{request.passenger?.name}</div>
       <div className="pool-req-card__route">
         <span className="zone-dot zone-dot--pickup" />
         <span>{pickup?.label ?? request.pickupZone}</span>
