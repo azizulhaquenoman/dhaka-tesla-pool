@@ -27,7 +27,7 @@ async function register({ name, email, password }) {
     },
   });
 
-  sendEmailOtp(email, otp, 'email-verification');
+  await sendEmailOtp(email, otp, 'email-verification');
   return user;
 }
 
@@ -87,7 +87,7 @@ async function resendVerification(userId) {
       emailVerificationOtpExpiry: otpExpiry(),
     },
   });
-  sendEmailOtp(user.email, otp, 'email-verification');
+  await sendEmailOtp(user.email, otp, 'email-verification');
 }
 
 // ── Forgot password — send OTP ────────────────────────────────
@@ -104,7 +104,7 @@ async function forgotPassword(email) {
       passwordResetOtpExpiry: otpExpiry(),
     },
   });
-  sendEmailOtp(email, otp, 'password-reset');
+  await sendEmailOtp(email, otp, 'password-reset');
 }
 
 // ── Reset password ────────────────────────────────────────────

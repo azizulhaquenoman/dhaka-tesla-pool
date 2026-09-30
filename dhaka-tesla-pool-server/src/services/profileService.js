@@ -57,7 +57,7 @@ async function requestEmailChange(userId, { newEmail, currentPassword }) {
       currentEmailChangeOtpExpiry: otpExpiry(),
     },
   });
-  sendEmailOtp(user.email, otp, 'current-email-change-verify');
+  await sendEmailOtp(user.email, otp, 'current-email-change-verify');
 }
 
 // ── Email change step 2: verify current email OTP ─────────────
@@ -83,7 +83,7 @@ async function verifyCurrentEmailOtp(userId, otp) {
       newEmailOtpExpiry:           otpExpiry(),
     },
   });
-  sendEmailOtp(user.pendingEmail, newOtp, 'new-email-change-verify');
+  await sendEmailOtp(user.pendingEmail, newOtp, 'new-email-change-verify');
 }
 
 // ── Email change step 3: verify new email OTP → commit change ─
@@ -127,7 +127,7 @@ async function requestPhoneOtp(userId, phone) {
       phoneVerificationOtpExpiry: otpExpiry(),
     },
   });
-  sendWhatsAppOtp(phone, otp);
+  await sendWhatsAppOtp(phone, otp);
 }
 
 // ── Phone step 2: verify OTP ───────────────────────────────────
