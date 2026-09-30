@@ -8,7 +8,6 @@
 // ─────────────────────────────────────────────────────────────
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const twilio = require('twilio');
 
 const emailProvider = process.env.OTP_EMAIL_PROVIDER || 'console';
 const whatsappProvider = process.env.OTP_WHATSAPP_PROVIDER || 'console';
@@ -72,17 +71,30 @@ async function sendWhatsAppOtp(phone, otp) {
     return;
   }
 
-  if (whatsappProvider !== 'twilio') throw new Error(`Unsupported OTP_WHATSAPP_PROVIDER: ${whatsappProvider}`);
-  const required = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_WHATSAPP_FROM'];
+  if (whatsappProvider !== 'greenapi') throw new Error(`Unsupported OTP_WHATSAPP_PROVIDER: ${whatsappProvider}`);
+  const required = ['GREENAPI_BASE_URL', 'GREENAPI_INSTANCE_ID', 'GREENAPI_API_TOKEN'];
   const missing = required.filter((key) => !process.env[key]);
-  if (missing.length) throw new Error(`Missing Twilio configuration: ${missing.join(', ')}`);
+  if (missing.length) throw new Error(`Missing Green API configuration: ${missing.join(', ')}`);
 
-  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  await client.messages.create({
-    body: `Your Dhaka Tesla Pool OTP is ${otp}. It expires in 15 minutes.`,
-    from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
-    to: `whatsapp:${phone.replace(/^whatsapp:/, '')}`,
-  });
+  let normalizedPhone = phone.replace(/\D/g, '');
+  if (normalizedPhone.startsWith('0')) normalizedPhone = `${process.env.GREENAPI_COUNTRY_CODE || '88'}${normalizedPhone.slice(1)}`;
+  if (!normalizedPhone.startsWith(process.env.GREENAPI_COUNTRY_CODE || '88')) normalizedPhone = `${process.env.GREENAPI_COUNTRY_CODE || '88'}${normalizedPhone}`;
+
+  const response = await fetch(
+    `${process.env.GREENAPI_BASE_URL}/waInstance${process.env.GREENAPI_INSTANCE_ID}/sendMessage/${process.env.GREENAPI_API_TOKEN}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chatId: `${normalizedPhone}@c.us`,
+        message: `Your Dhaka Tesla Pool OTP is ${otp}. It expires in 15 minutes.`,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Green API request failed with status ${response.status}`);
+  }
 }
 
 module.exports = { generateOtp, otpExpiry, sendEmailOtp, sendWhatsAppOtp };

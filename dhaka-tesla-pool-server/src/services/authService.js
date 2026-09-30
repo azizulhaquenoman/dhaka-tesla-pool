@@ -4,8 +4,8 @@
 // Controllers stay thin — all DB access and rule enforcement
 // live here.
 // ─────────────────────────────────────────────────────────────
-const bcrypt   = require('bcryptjs');
-const prisma   = require('../prisma/client');
+const bcrypt = require('bcryptjs');
+const prisma = require('../prisma/client');
 const AppError = require('../utils/AppError');
 const { generateOtp, otpExpiry, sendEmailOtp } = require('../utils/otp');
 
@@ -15,14 +15,14 @@ async function register({ name, email, password }) {
   if (existing) throw new AppError('Email already registered', 409);
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const otp          = generateOtp();
+  const otp = generateOtp();
 
   const user = await prisma.user.create({
     data: {
       name,
       email,
       passwordHash,
-      emailVerificationOtp:       otp,
+      emailVerificationOtp: otp,
       emailVerificationOtpExpiry: otpExpiry(),
     },
   });
@@ -66,8 +66,8 @@ async function verifyEmail(userId, otp) {
   await prisma.user.update({
     where: { id: userId },
     data: {
-      emailVerified:              true,
-      emailVerificationOtp:       null,
+      emailVerified: true,
+      emailVerificationOtp: null,
       emailVerificationOtpExpiry: null,
     },
   });
@@ -83,7 +83,7 @@ async function resendVerification(userId) {
   await prisma.user.update({
     where: { id: userId },
     data: {
-      emailVerificationOtp:       otp,
+      emailVerificationOtp: otp,
       emailVerificationOtpExpiry: otpExpiry(),
     },
   });
@@ -100,7 +100,7 @@ async function forgotPassword(email) {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      passwordResetOtp:       otp,
+      passwordResetOtp: otp,
       passwordResetOtpExpiry: otpExpiry(),
     },
   });
@@ -124,7 +124,7 @@ async function resetPassword({ email, otp, newPassword }) {
     where: { id: user.id },
     data: {
       passwordHash,
-      passwordResetOtp:       null,
+      passwordResetOtp: null,
       passwordResetOtpExpiry: null,
     },
   });

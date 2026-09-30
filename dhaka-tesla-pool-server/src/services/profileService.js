@@ -2,24 +2,24 @@
 // src/services/profileService.js
 // Profile update logic — name, email change (3-step), phone (2-step).
 // ─────────────────────────────────────────────────────────────
-const bcrypt   = require('bcryptjs');
-const prisma   = require('../prisma/client');
+const bcrypt = require('bcryptjs');
+const prisma = require('../prisma/client');
 const AppError = require('../utils/AppError');
 const { generateOtp, otpExpiry, sendEmailOtp, sendWhatsAppOtp } = require('../utils/otp');
 
 // ── Get full profile ──────────────────────────────────────────
 async function getProfile(userId) {
   const user = await prisma.user.findUnique({
-    where:  { id: userId },
+    where: { id: userId },
     select: {
-      id:            true,
-      name:          true,
-      email:         true,
-      role:          true,
+      id: true,
+      name: true,
+      email: true,
+      role: true,
       emailVerified: true,
-      phone:         true,
+      phone: true,
       phoneVerified: true,
-      createdAt:     true,
+      createdAt: true,
     },
   });
   if (!user) throw new AppError('User not found', 404);
@@ -31,7 +31,7 @@ async function updateName(userId, name) {
   if (!name || name.trim() === '') throw new AppError('Name is required', 400);
   return prisma.user.update({
     where: { id: userId },
-    data:  { name: name.trim() },
+    data: { name: name.trim() },
     select: { id: true, name: true, email: true, role: true, emailVerified: true, phone: true },
   });
 }
@@ -51,9 +51,9 @@ async function requestEmailChange(userId, { newEmail, currentPassword }) {
   const otp = generateOtp();
   await prisma.user.update({
     where: { id: userId },
-    data:  {
-      pendingEmail:                newEmail,
-      currentEmailChangeOtp:       otp,
+    data: {
+      pendingEmail: newEmail,
+      currentEmailChangeOtp: otp,
       currentEmailChangeOtpExpiry: otpExpiry(),
     },
   });
@@ -76,11 +76,11 @@ async function verifyCurrentEmailOtp(userId, otp) {
   const newOtp = generateOtp();
   await prisma.user.update({
     where: { id: userId },
-    data:  {
-      currentEmailChangeOtp:       null,
+    data: {
+      currentEmailChangeOtp: null,
       currentEmailChangeOtpExpiry: null,
-      newEmailOtp:                 newOtp,
-      newEmailOtpExpiry:           otpExpiry(),
+      newEmailOtp: newOtp,
+      newEmailOtpExpiry: otpExpiry(),
     },
   });
   await sendEmailOtp(user.pendingEmail, newOtp, 'new-email-change-verify');
@@ -101,10 +101,10 @@ async function verifyNewEmailOtp(userId, otp) {
 
   await prisma.user.update({
     where: { id: userId },
-    data:  {
-      email:            user.pendingEmail,
-      pendingEmail:     null,
-      newEmailOtp:      null,
+    data: {
+      email: user.pendingEmail,
+      pendingEmail: null,
+      newEmailOtp: null,
       newEmailOtpExpiry: null,
     },
   });
@@ -120,10 +120,10 @@ async function requestPhoneOtp(userId, phone) {
   const otp = generateOtp();
   await prisma.user.update({
     where: { id: userId },
-    data:  {
+    data: {
       phone,
-      phoneVerified:              false,
-      phoneVerificationOtp:       otp,
+      phoneVerified: false,
+      phoneVerificationOtp: otp,
       phoneVerificationOtpExpiry: otpExpiry(),
     },
   });
@@ -144,9 +144,9 @@ async function verifyPhoneOtp(userId, otp) {
 
   await prisma.user.update({
     where: { id: userId },
-    data:  {
-      phoneVerified:              true,
-      phoneVerificationOtp:       null,
+    data: {
+      phoneVerified: true,
+      phoneVerificationOtp: null,
       phoneVerificationOtpExpiry: null,
     },
   });
