@@ -2,30 +2,38 @@
 // src/controllers/authController.js
 // Thin request/response layer — delegates all logic to authService.
 // ─────────────────────────────────────────────────────────────
-const authService               = require('../services/authService');
+const authService = require('../services/authService');
 const {
   issueTokenCookie,
   clearTokenCookie,
   issueVerificationCookie,
   clearVerificationCookie,
 } = require('../utils/jwt');
-const { isValidEmail }          = require('../middlewares/validate');
+const { isValidEmail } = require('../middlewares/validate');
 
 // POST /api/auth/register
 async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
-
-    if (!name?.trim())           return res.status(400).json({ message: 'name is required' });
-    if (!isValidEmail(email))    return res.status(400).json({ message: 'Valid email is required' });
+    if (!name?.trim()) return res.status(400).json({ message: 'name is required' });
+    if (!isValidEmail(email)) return res.status(400).json({ message: 'Valid email is required' });
     if (!password || password.length < 6)
       return res.status(400).json({ message: 'password must be at least 6 characters' });
 
     const user = await authService.register({ name: name.trim(), email, password });
     issueVerificationCookie(res, user.id);
+
+    // Return full user so frontend can set AuthContext without calling /auth/me
     res.status(201).json({
       message: 'Registration successful. Check your email for the verification OTP.',
-      userId:  user.id,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        phone: user.phone ?? null,
+      },
     });
   } catch (err) { next(err); }
 }
@@ -38,16 +46,22 @@ async function login(req, res, next) {
       return res.status(400).json({ message: 'email and password are required' });
 
     const user = await authService.login({ email, password });
-    issueTokenCookie(res, { userId: user.id, role: user.role });
 
+    // Issue verification cookie so unverified users can reach /verify-email
+    if (!user.emailVerified) {
+      issueVerificationCookie(res, user.id);
+      return res.status(403).json({ message: 'Email not verified. Please check your inbox or resend.' });
+    }
+
+    issueTokenCookie(res, { userId: user.id, role: user.role });
     res.json({
       user: {
-        id:            user.id,
-        name:          user.name,
-        email:         user.email,
-        role:          user.role,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
         emailVerified: user.emailVerified,
-        phone:         user.phone,
+        phone: user.phone ?? null,
       },
     });
   } catch (err) { next(err); }
@@ -63,8 +77,8 @@ function logout(req, res) {
 async function getMe(req, res, next) {
   try {
     const prisma = require('../prisma/client');
-    const user   = await prisma.user.findUnique({
-      where:  { id: req.user.id },
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
       select: { id: true, name: true, email: true, role: true, emailVerified: true, phone: true },
     });
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -77,9 +91,20 @@ async function verifyEmail(req, res, next) {
   try {
     const { otp } = req.body;
     if (!otp) return res.status(400).json({ message: 'otp is required' });
+
     await authService.verifyEmail(req.user.id, String(otp));
+
+    // Fetch user to get role for the session token
+    const prisma = require('../prisma/client');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, role: true, name: true, email: true, phone: true },
+    });
+
     clearVerificationCookie(res);
-    res.json({ message: 'Email verified successfully' });
+    issueTokenCookie(res, { userId: user.id, role: user.role }); // log them in immediately
+
+    res.json({ message: 'Email verified successfully', user });
   } catch (err) { next(err); }
 }
 
