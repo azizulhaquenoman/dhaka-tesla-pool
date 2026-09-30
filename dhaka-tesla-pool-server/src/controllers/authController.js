@@ -3,7 +3,12 @@
 // Thin request/response layer — delegates all logic to authService.
 // ─────────────────────────────────────────────────────────────
 const authService               = require('../services/authService');
-const { issueTokenCookie, clearTokenCookie } = require('../utils/jwt');
+const {
+  issueTokenCookie,
+  clearTokenCookie,
+  issueVerificationCookie,
+  clearVerificationCookie,
+} = require('../utils/jwt');
 const { isValidEmail }          = require('../middlewares/validate');
 
 // POST /api/auth/register
@@ -17,6 +22,7 @@ async function register(req, res, next) {
       return res.status(400).json({ message: 'password must be at least 6 characters' });
 
     const user = await authService.register({ name: name.trim(), email, password });
+    issueVerificationCookie(res, user.id);
     res.status(201).json({
       message: 'Registration successful. Check your email for the verification OTP.',
       userId:  user.id,
@@ -72,6 +78,7 @@ async function verifyEmail(req, res, next) {
     const { otp } = req.body;
     if (!otp) return res.status(400).json({ message: 'otp is required' });
     await authService.verifyEmail(req.user.id, String(otp));
+    clearVerificationCookie(res);
     res.json({ message: 'Email verified successfully' });
   } catch (err) { next(err); }
 }

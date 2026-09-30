@@ -6,6 +6,7 @@
 const router       = require('express').Router();
 const ctrl         = require('../controllers/authController');
 const authenticate = require('../middlewares/authenticate');
+const authenticateVerification = require('../middlewares/authenticateVerification');
 
 // Public
 router.post('/register',             ctrl.register);
@@ -16,7 +17,7 @@ router.post('/reset-password',       ctrl.resetPassword);
 // Session required (cookie set at registration, before verification)
 router.post('/logout',               authenticate, ctrl.logout);
 router.get('/me',                    authenticate, ctrl.getMe);
-router.post('/verify-email',         authenticate, ctrl.verifyEmail);
-router.post('/resend-verification',  authenticate, ctrl.resendVerification);
+router.post('/verify-email',         authenticateVerification, ctrl.verifyEmail);
+router.post('/resend-verification',  authenticateVerification, ctrl.resendVerification);
 
 module.exports = router;

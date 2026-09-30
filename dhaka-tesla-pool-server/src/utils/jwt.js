@@ -7,6 +7,7 @@
 const jwt = require('jsonwebtoken');
 
 const COOKIE_NAME = 'dtp_token';
+const VERIFICATION_COOKIE_NAME = 'dtp_verification';
 
 /**
  * Sign a JWT and set it as an httpOnly cookie on the response.
@@ -27,6 +28,21 @@ function issueTokenCookie(res, payload) {
   });
 }
 
+function issueVerificationCookie(res, userId) {
+  const token = jwt.sign(
+    { userId, purpose: 'email-verification' },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' },
+  );
+
+  res.cookie(VERIFICATION_COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 15 * 60 * 1000,
+  });
+}
+
 /**
  * Clear the auth cookie on logout.
  */
@@ -34,4 +50,15 @@ function clearTokenCookie(res) {
   res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
 }
 
-module.exports = { issueTokenCookie, clearTokenCookie, COOKIE_NAME };
+function clearVerificationCookie(res) {
+  res.clearCookie(VERIFICATION_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
+}
+
+module.exports = {
+  issueTokenCookie,
+  clearTokenCookie,
+  issueVerificationCookie,
+  clearVerificationCookie,
+  COOKIE_NAME,
+  VERIFICATION_COOKIE_NAME,
+};
