@@ -33,10 +33,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // ── Routes ───────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/rides',   ridesRoutes);
-app.use('/api/driver',  driverRoutes);
-app.use('/api/profile', profileRoutes);
+app.use('/auth',    authRoutes);
+app.use('/rides',   ridesRoutes);
+app.use('/driver',  driverRoutes);
+app.use('/profile', profileRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
