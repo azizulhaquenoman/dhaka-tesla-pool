@@ -17,3 +17,7 @@ coverage/
 
 # Local tooling files
 *.local
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
