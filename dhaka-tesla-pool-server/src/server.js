@@ -3,6 +3,7 @@
 // Binds the port here, not in app.js, so Jest can import
 // app.js cleanly without starting a real server.
 // ─────────────────────────────────────────────────────────────
+require('dotenv').config();
 const app = require('./app');
 const PORT = process.env.PORT || 4000;
 
