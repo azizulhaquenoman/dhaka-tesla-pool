@@ -1,8 +1,6 @@
-// ─────────────────────────────────────────────────────────────
-// src/controllers/authController.js
-// Thin request/response layer — delegates all logic to authService.
-// ─────────────────────────────────────────────────────────────
+require('dotenv').config();
 const authService = require('../services/authService');
+const prisma = require('../prisma/client');
 const {
   issueTokenCookie,
   clearTokenCookie,
@@ -11,7 +9,6 @@ const {
 } = require('../utils/jwt');
 const { isValidEmail } = require('../middlewares/validate');
 
-// POST /api/auth/register
 async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
@@ -23,7 +20,7 @@ async function register(req, res, next) {
     const user = await authService.register({ name: name.trim(), email, password });
     issueVerificationCookie(res, user.id);
 
-    // Return full user so frontend can set AuthContext without calling /auth/me
+    // return full user so frontend sets AuthContext without calling /auth/me
     res.status(201).json({
       message: 'Registration successful. Check your email for the verification OTP.',
       user: {
@@ -38,7 +35,6 @@ async function register(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/login
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -47,10 +43,11 @@ async function login(req, res, next) {
 
     const user = await authService.login({ email, password });
 
-    // Issue verification cookie so unverified users can reach /verify-email
     if (!user.emailVerified) {
-      issueVerificationCookie(res, user.id);
-      return res.status(403).json({ message: 'Email not verified. Please check your inbox or resend.' });
+      issueVerificationCookie(res, user.id); // gives cookie so /verify-email works
+      return res.status(403).json({
+        message: 'Email not verified. Please check your inbox or resend the code.',
+      });
     }
 
     issueTokenCookie(res, { userId: user.id, role: user.role });
@@ -67,16 +64,13 @@ async function login(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/logout
 function logout(req, res) {
   clearTokenCookie(res);
   res.json({ message: 'Logged out' });
 }
 
-// GET /api/auth/me
 async function getMe(req, res, next) {
   try {
-    const prisma = require('../prisma/client');
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { id: true, name: true, email: true, role: true, emailVerified: true, phone: true },
@@ -86,7 +80,6 @@ async function getMe(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/verify-email
 async function verifyEmail(req, res, next) {
   try {
     const { otp } = req.body;
@@ -94,21 +87,17 @@ async function verifyEmail(req, res, next) {
 
     await authService.verifyEmail(req.user.id, String(otp));
 
-    // Fetch user to get role for the session token
-    const prisma = require('../prisma/client');
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { id: true, role: true, name: true, email: true, phone: true },
     });
 
     clearVerificationCookie(res);
-    issueTokenCookie(res, { userId: user.id, role: user.role }); // log them in immediately
-
+    issueTokenCookie(res, { userId: user.id, role: user.role }); // log in immediately
     res.json({ message: 'Email verified successfully', user });
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/resend-verification
 async function resendVerification(req, res, next) {
   try {
     await authService.resendVerification(req.user.id);
@@ -116,18 +105,15 @@ async function resendVerification(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/forgot-password
 async function forgotPassword(req, res, next) {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'email is required' });
     await authService.forgotPassword(email);
-    // Always 200 — don't reveal whether email exists
     res.json({ message: 'If that email is registered, a reset OTP has been sent.' });
   } catch (err) { next(err); }
 }
 
-// POST /api/auth/reset-password
 async function resetPassword(req, res, next) {
   try {
     const { email, otp, newPassword } = req.body;
@@ -141,12 +127,7 @@ async function resetPassword(req, res, next) {
 }
 
 module.exports = {
-  register,
-  login,
-  logout,
-  getMe,
-  verifyEmail,
-  resendVerification,
-  forgotPassword,
-  resetPassword,
+  register, login, logout, getMe,
+  verifyEmail, resendVerification,
+  forgotPassword, resetPassword,
 };

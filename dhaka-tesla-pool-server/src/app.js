@@ -5,16 +5,16 @@
 // ─────────────────────────────────────────────────────────────
 require('dotenv').config();
 
-const express      = require('express');
+const express = require('express');
 const cookieParser = require('cookie-parser');
-const cors         = require('cors');
+const cors = require('cors');
 
 const errorHandler = require('./middlewares/errorHandler');
 
 // Route groups
-const authRoutes    = require('./routes/auth');
-const ridesRoutes   = require('./routes/rides');
-const driverRoutes  = require('./routes/driver');
+const authRoutes = require('./routes/auth');
+const ridesRoutes = require('./routes/rides');
+const driverRoutes = require('./routes/driver');
 const profileRoutes = require('./routes/profile');
 
 const app = express();
@@ -33,10 +33,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // ── Routes ───────────────────────────────────────────────────
-app.use('/auth',    authRoutes);
-app.use('/rides',   ridesRoutes);
-app.use('/driver',  driverRoutes);
-app.use('/profile', profileRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/rides', ridesRoutes);
+app.use('/api/driver', driverRoutes);
+app.use('/api/profile', profileRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
